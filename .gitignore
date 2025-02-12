@@ -13,4 +13,4 @@ config.py
 *.log
 
 # Ignore compiled files
-*.pyc
+*.pycfirebase_key.json
