@@ -2,12 +2,11 @@ name: Job Scraper Bot
 
 on:
   schedule:
-    - cron: "0 */3 * * *"  # Runs every 3 hours (job scraper)
-    - cron: "0 */6 * * *"  # Runs every 6 hours (email sender)
+    - cron: "0 */8 * * *"  # Runs every 8 hours (scrape and send email)
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
-  scrape-jobs:
+  scrape-and-email:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,31 +33,6 @@ jobs:
 
       - name: Run Job Scraper
         run: python main.py
-
-  send-email:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Set Up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
-
-      - name: Write Firebase Credentials to File
-        run: echo '${{ secrets.FIREBASE_CREDENTIALS_JSON }}' > /tmp/firebase_credentials.json
-
-      - name: Set Up Environment Variables
-        run: |
-          echo "FIREBASE_CREDENTIALS_PATH=/tmp/firebase_credentials.json" >> $GITHUB_ENV
-          echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> $GITHUB_ENV
-          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
-          echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> $GITHUB_ENV
-          echo "LOCATION=${{ secrets.LOCATION }}" >> $GITHUB_ENV
 
       - name: Send Job Alert Emails
         run: python email_service/send_email.py
