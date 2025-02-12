@@ -4,16 +4,25 @@ from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials
 
-# Load environment variables from .env file (for local development)
+# ✅ Load environment variables from .env file (for local development)
 load_dotenv()
 
 # ✅ Handle Firebase Credentials (from GitHub Secrets OR .env file)
 firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
 
 if firebase_json:
-    firebase_credentials_path = "/tmp/firebase_credentials.json"
-    with open(firebase_credentials_path, "w") as f:
-        f.write(firebase_json)
+    try:
+        # ✅ Convert JSON string back to dictionary
+        firebase_credentials = json.loads(firebase_json)
+
+        # ✅ Write the credentials to a temporary file
+        firebase_credentials_path = "/tmp/firebase_credentials.json"
+        with open(firebase_credentials_path, "w") as f:
+            json.dump(firebase_credentials, f)
+
+    except json.JSONDecodeError:
+        raise ValueError("❌ Invalid format in FIREBASE_CREDENTIALS_JSON. Check your GitHub Secrets.")
+
 else:
     firebase_credentials_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
 
@@ -21,8 +30,9 @@ if not firebase_credentials_path:
     raise ValueError("❌ FIREBASE_CREDENTIALS_PATH is missing! Please set it in your .env file or GitHub Secrets.")
 
 # ✅ Initialize Firebase
-cred = credentials.Certificate(firebase_credentials_path)
-firebase_admin.initialize_app(cred)
+if not firebase_admin._apps:
+    cred = credentials.Certificate(firebase_credentials_path)
+    firebase_admin.initialize_app(cred)
 
 # ✅ Load Email Credentials
 EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")

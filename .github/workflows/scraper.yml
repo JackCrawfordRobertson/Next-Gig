@@ -21,9 +21,12 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      - name: Write Firebase Credentials to File
+        run: echo '${{ secrets.FIREBASE_CREDENTIALS_JSON }}' > /tmp/firebase_credentials.json
+
       - name: Set Up Environment Variables
         run: |
-          echo "FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'" >> $GITHUB_ENV
+          echo "FIREBASE_CREDENTIALS_PATH=/tmp/firebase_credentials.json" >> $GITHUB_ENV
           echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> $GITHUB_ENV
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
           echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> $GITHUB_ENV
@@ -46,9 +49,12 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      - name: Write Firebase Credentials to File
+        run: echo '${{ secrets.FIREBASE_CREDENTIALS_JSON }}' > /tmp/firebase_credentials.json
+
       - name: Set Up Environment Variables
         run: |
-          echo "FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'" >> $GITHUB_ENV
+          echo "FIREBASE_CREDENTIALS_PATH=/tmp/firebase_credentials.json" >> $GITHUB_ENV
           echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> $GITHUB_ENV
           echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
           echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> $GITHUB_ENV
