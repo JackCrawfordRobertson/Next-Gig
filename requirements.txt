@@ -1,8 +1,18 @@
-# pip install -r requirements.txt
-
+# Web scraping
 requests
 beautifulsoup4
 selenium
+cloudscraper
+
+# Scheduler
 schedule
+
+# Email handling
 sendgrid
-sqlite3
+smtplib
+
+# Firebase database
+firebase-admin
+
+# Chrome WebDriver manager
+webdriver-manager
