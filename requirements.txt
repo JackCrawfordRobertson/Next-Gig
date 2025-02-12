@@ -9,7 +9,6 @@ schedule
 
 # Email handling
 sendgrid
-smtplib
 
 # Firebase database
 firebase-admin
