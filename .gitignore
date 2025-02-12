@@ -10,12 +10,11 @@ jobs.db
 
 # Ignore logs
 *.log
+*.json
+serviceAccountKey.json
 
 # Ignore compiled files
 *.pycfirebase_key.json
-firebase_key.json
-firebase_key.json
-firebase_key.json
 firebase_key.json
 firebase-adminsdk-XXXXX.json
 serviceAccountKey.json
