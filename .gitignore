@@ -7,10 +7,12 @@ jobs.db
 
 # Ignore environment variables
 .env
-config.py
 
 # Ignore logs
 *.log
 
 # Ignore compiled files
 *.pycfirebase_key.json
+firebase_key.json
+firebase_key.json
+firebase_key.json
