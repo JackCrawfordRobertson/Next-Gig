@@ -21,6 +21,14 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
+      - name: Set Up Environment Variables
+        run: |
+          echo "FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'" >> $GITHUB_ENV
+          echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+          echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ secrets.LOCATION }}" >> $GITHUB_ENV
+
       - name: Run Job Scraper
         run: python main.py
 
@@ -37,6 +45,14 @@ jobs:
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
+
+      - name: Set Up Environment Variables
+        run: |
+          echo "FIREBASE_CREDENTIALS_JSON='${{ secrets.FIREBASE_CREDENTIALS_JSON }}'" >> $GITHUB_ENV
+          echo "EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}" >> $GITHUB_ENV
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> $GITHUB_ENV
+          echo "RECIPIENT_EMAIL=${{ secrets.RECIPIENT_EMAIL }}" >> $GITHUB_ENV
+          echo "LOCATION=${{ secrets.LOCATION }}" >> $GITHUB_ENV
 
       - name: Send Job Alert Emails
         run: python email_service/send_email.py
