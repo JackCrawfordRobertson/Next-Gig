@@ -2,7 +2,8 @@ name: Job Scraper Bot
 
 on:
   schedule:
-    - cron: "0 */3 * * *"  # Runs every 3 hours
+    - cron: "0 */3 * * *"  # Runs every 3 hours (job scraper)
+    - cron: "0 */6 * * *"  # Runs every 6 hours (email sender)
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
@@ -20,5 +21,22 @@ jobs:
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Scraper
+      - name: Run Job Scraper
         run: python main.py
+
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Send Job Alert Emails
+        run: python email_service/send_email.py

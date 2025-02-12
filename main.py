@@ -2,7 +2,6 @@ import schedule
 import time
 from fetch_store.fetch_jobs import run_scrapers  
 from fetch_store.store_jobs import store_jobs  
-from email_service.send_email import send_email  
 
 def job_cycle():
     """Fetch new jobs & store them in Firestore."""
@@ -16,11 +15,7 @@ def job_cycle():
 
     print("✅ Job check complete.")
 
-# ✅ Schedule tasks
-schedule.every(3).hours.do(job_cycle)  # Fetch jobs every 3 hours
-schedule.every(6).hours.do(send_email)  # Send job alert emails every 6 hours
-
-print("\n🚀 Job Finder Bot is running... (Press CTRL+C to stop)")
-while True:
-    schedule.run_pending()
-    time.sleep(60)  # ✅ Check every minute for pending jobs
+# ✅ TEMPORARY: Run the job immediately for testing
+if __name__ == "__main__":
+    print("\n🚀 Running scraper test...")
+    job_cycle()  # ✅ Runs once to verify scrapers and database storage

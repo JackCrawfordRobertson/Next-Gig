@@ -45,18 +45,22 @@ def fetch_workable_jobs():
         except Exception:
             print("⚠️ No cookie popup found or already dismissed.")
 
-        # ✅ Click "Show More Jobs" Button Until All Jobs Are Loaded
-        while True:
+        # ✅ Click "Show More Jobs" Up to 10 Times
+        max_clicks = 10
+        click_count = 0
+
+        while click_count < max_clicks:
             try:
                 show_more_button = driver.find_element(By.CSS_SELECTOR, "button[data-ui='load-more-button']")
                 show_more_button.click()
-                print("🔽 Clicked 'Show More Jobs' button...")
+                click_count += 1
+                print(f"🔽 Clicked 'Show More Jobs' button #{click_count}...")
                 time.sleep(3)  # Allow time for new jobs to load
             except Exception:
-                print("✅ No more 'Show More Jobs' button found. All jobs loaded.")
+                print("✅ No more 'Show More Jobs' button found or end of jobs reached.")
                 break  # Exit loop when no button is found
 
-        print("🔍 Searching for job elements...")
+        print(f"🔍 Searching for job elements after {click_count} load-more clicks...")
         job_elements = driver.find_elements(By.CSS_SELECTOR, ".jobCardDetails__job-breakdown--AnIQr")
         print(f"📌 Found {len(job_elements)} job elements for '{keyword}'.")
 
@@ -96,6 +100,3 @@ def fetch_workable_jobs():
     driver.quit()
     print(f"✅ Finished scraping Workable. Total jobs found: {len(jobs)}")
     return jobs
-
-# ✅ Run Scraper
-fetch_workable_jobs()

@@ -1,8 +1,7 @@
-import time
 from scrapers.ifyoucould import fetch_ifyoucould_jobs
 from scrapers.unjobs import fetch_unjobs
 from scrapers.workable import fetch_workable_jobs
-from fetch_store.store_jobs import store_jobs  # ✅ Calls `store_jobs.py`
+from fetch_store.store_jobs import store_jobs  
 
 # ✅ Fetch Jobs from Scrapers
 def fetch_jobs():
@@ -17,23 +16,18 @@ def fetch_jobs():
 
     return jobs  # ✅ Keeps jobs in separate lists by source
 
-# ✅ Main Function: Run Scrapers Every 3 Hours
+# ✅ Main Function: Run Scrapers Once (Triggered by GitHub Actions)
 def run_scrapers():
-    while True:
-        jobs = fetch_jobs()
+    jobs = fetch_jobs()
 
-        # ✅ Send to Firestore via `store_jobs.py`
-        if any(jobs.values()):  # ✅ Checks if any list has jobs
-            total_jobs = sum(len(v) for v in jobs.values())
-            print(f"\n💾 Sending {total_jobs} jobs to Firestore...")
-            store_jobs(jobs)  # ✅ Calls `store_jobs.py`
-        else:
-            print("\n❌ No jobs found across all sources.")
+    # ✅ Send to Firestore via `store_jobs.py`
+    if any(jobs.values()):  # ✅ Checks if any list has jobs
+        total_jobs = sum(len(v) for v in jobs.values())
+        print(f"\n💾 Sending {total_jobs} jobs to Firestore...")
+        store_jobs(jobs)  # ✅ Calls `store_jobs.py`
+    else:
+        print("\n❌ No jobs found across all sources.")
 
-        # ⏳ Wait for 3 hours before running again
-        print("\n⏳ Sleeping for 3 hours before the next run...\n")
-        time.sleep(3 * 60 * 60)  # 3 hours in seconds
-
-# ✅ Run Scrapers
+# ✅ Run Scrapers (No Loop, GitHub Actions Handles Scheduling)
 if __name__ == "__main__":
     run_scrapers()

@@ -1,19 +1,27 @@
+import os
+import hashlib
 import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import firebase_admin
 from firebase_admin import credentials, firestore
-import hashlib
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) 
-import config
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
 
+# ✅ Load environment variables
+load_dotenv()
 
-# ✅ Initialize Firestore (If Not Already Initialized)
+# ✅ Get Firebase credentials path
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")
+
+if not FIREBASE_CREDENTIALS_PATH:
+    raise ValueError("❌ Missing FIREBASE_CREDENTIALS_PATH in environment variables. Please set it in the .env file.")
+
+# ✅ Prevent multiple Firebase initializations
 if not firebase_admin._apps:
-    cred = credentials.Certificate(config.FIREBASE_CREDENTIALS)
+    cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
     firebase_admin.initialize_app(cred)
+
+# ✅ Initialize Firestore
 db = firestore.client()
 
 # ✅ Helper Function: Generate Firestore Document ID
@@ -25,14 +33,14 @@ def generate_document_id(url):
 def get_unsent_jobs():
     """Retrieve unsent jobs from Firestore."""
     jobs_collection = db.collection("jobs_compiled").stream()
-    unsent_jobs = []
-
-    for job in jobs_collection:
-        job_data = job.to_dict()
-        if not job_data.get("sent", False):  # ✅ Only fetch jobs that haven't been marked as sent
-            unsent_jobs.append(job_data)
-
+    unsent_jobs = [job.to_dict() for job in jobs_collection if not job.to_dict().get("sent", False)]
     return unsent_jobs
+
+# ✅ Fetch All Jobs (Fallback)
+def get_all_jobs():
+    """Retrieve all jobs from Firestore (used if no new jobs)."""
+    jobs_collection = db.collection("jobs_compiled").stream()
+    return [job.to_dict() for job in jobs_collection]
 
 # ✅ Mark Jobs as Sent
 def mark_jobs_as_sent(jobs):
@@ -45,42 +53,51 @@ def mark_jobs_as_sent(jobs):
 # ✅ Send Email
 def send_email():
     """Send job listings via Gmail SMTP with formatted output."""
+    
+    # ✅ Fetch new jobs
     jobs = get_unsent_jobs()
+    new_jobs = True
 
     if not jobs:
-        print("❌ No new jobs to send.")
+        print("❌ No new jobs found. Sending full job list instead.")
+        jobs = get_all_jobs()  # ✅ Fallback to all jobs
+        new_jobs = False  # 🚨 Mark email as a full-job list
+
+    if not jobs:
+        print("❌ No jobs in database. Skipping email.")
         return
 
     # ✅ Format Email Content
     job_list = "\n".join([
-        f"🆕 NEW! {job['title']} at {job['company']} ({job['location']})\n   🔗 {job['url']}\n"
+        f"🆕 {job['title']} at {job['company']} ({job['location']})\n   🔗 {job['url']}\n"
         for job in jobs
     ])
 
-    subject = f"🛠️ {len(jobs)} New Job Listings Found!"
-    body = f"Hello,\n\nHere are the latest job listings:\n\n{job_list}\n\nBest,\nJob Scraper Bot"
+    subject = f"🛠️ {len(jobs)} {'New ' if new_jobs else ''}Job Listings Found!"
+    body = f"Hello,\n\nHere are the {'latest' if new_jobs else 'full'} job listings:\n\n{job_list}\n\nBest,\nJob Scraper Bot"
 
     # ✅ Set up email
     msg = MIMEMultipart()
-    msg["From"] = config.EMAIL_ADDRESS
-    msg["To"] = config.RECIPIENT_EMAIL
+    msg["From"] = os.getenv("EMAIL_ADDRESS")
+    msg["To"] = os.getenv("RECIPIENT_EMAIL")
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
     try:
         # ✅ Connect to SMTP server
-        server = smtplib.SMTP(config.SMTP_SERVER, config.SMTP_PORT)
+        server = smtplib.SMTP(os.getenv("SMTP_SERVER"), int(os.getenv("SMTP_PORT")))
         server.starttls()
-        server.login(config.EMAIL_ADDRESS, config.EMAIL_PASSWORD)
-        server.sendmail(config.EMAIL_ADDRESS, config.RECIPIENT_EMAIL, msg.as_string())
+        server.login(os.getenv("EMAIL_ADDRESS"), os.getenv("EMAIL_PASSWORD"))
+        server.sendmail(os.getenv("EMAIL_ADDRESS"), os.getenv("RECIPIENT_EMAIL"), msg.as_string())
         server.quit()
 
         print("✅ Email sent successfully!")
-        mark_jobs_as_sent(jobs)  # ✅ Mark jobs as sent after successful email
+        if new_jobs:
+            mark_jobs_as_sent(jobs)  # ✅ Mark only new jobs as sent
 
     except Exception as e:
-        print("❌ Error sending email:", e)
+        print(f"❌ Error sending email: {e}")
 
-# ✅ Run Email Test (Only when running this file directly)
+# ✅ Run Email Task (Triggered by GitHub Actions)
 if __name__ == "__main__":
     send_email()

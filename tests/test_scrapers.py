@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Add the parent directory (job_finder_bot) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from scrapers.ifyoucould import fetch_ifyoucould_jobs
 from scrapers.unjobs import fetch_unjobs
 from scrapers.workable import fetch_workable_jobs
