@@ -1,6 +1,10 @@
 import smtplib
 from email.mime.text import MIMEText
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) 
 import config
+
 
 def send_test_email():
     subject = "Test Email from Job Finder Bot"
