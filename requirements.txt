@@ -1,0 +1,8 @@
+# pip install -r requirements.txt
+
+requests
+beautifulsoup4
+selenium
+schedule
+sendgrid
+sqlite3

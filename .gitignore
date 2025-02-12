@@ -1,0 +1,16 @@
+# Ignore Python virtual environment
+venv/
+__pycache__/
+
+# Ignore database file
+jobs.db
+
+# Ignore environment variables
+.env
+config.py
+
+# Ignore logs
+*.log
+
+# Ignore compiled files
+*.pyc
