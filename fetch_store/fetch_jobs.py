@@ -2,7 +2,7 @@ from scrapers.ifyoucould import fetch_ifyoucould_jobs
 from scrapers.unjobs import fetch_unjobs
 from scrapers.workable import fetch_workable_jobs
 from scrapers.linkedin import fetch_all_linkedin_jobs  
-from scrapers.ziprecruiter import fetch_all_ziprecruiter_jobs
+# from scrapers.ziprecruiter import fetch_all_ziprecruiter_jobs
 from fetch_store.store_jobs import store_jobs  
 
 def fetch_jobs():
