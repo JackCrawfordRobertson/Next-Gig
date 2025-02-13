@@ -18,7 +18,7 @@ HEADERS = {
 EXCLUDED_KEYWORDS = ["video", "social media"]
 
 # ✅ Fetch all LinkedIn jobs (cycles through all job keywords)
-def fetch_all_linkedin_jobs(max_jobs=10):
+def fetch_all_linkedin_jobs(max_jobs=50):
     """
     Fetches LinkedIn job listings for all keywords in config.py.
     """
@@ -39,7 +39,7 @@ def fetch_all_linkedin_jobs(max_jobs=10):
     return all_jobs
 
 # ✅ Fetch LinkedIn jobs (single keyword search)
-def fetch_linkedin_jobs(search_term, location, max_jobs=25):
+def fetch_linkedin_jobs(search_term, location, max_jobs=15):
     """
     Fetches job listings from LinkedIn for a specific job title.
     Filters out jobs containing unwanted keywords.

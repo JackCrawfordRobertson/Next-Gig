@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
+from collections import defaultdict
 
 # ✅ Load environment variables
 load_dotenv()
@@ -50,9 +51,25 @@ def mark_jobs_as_sent(jobs):
         job_ref = db.collection("jobs_compiled").document(doc_id)
         job_ref.update({"sent": True})  # ✅ Mark as sent in Firestore
 
-# ✅ Send Email
+# ✅ Extract Platform from URL
+def get_source_platform(url):
+    """Extracts the job platform based on the URL."""
+    if "linkedin.com" in url:
+        return "🔵 LinkedIn"
+    elif "workable.com" in url:
+        return "🟠 Workable"
+    elif "unjobs.org" in url:
+        return "🌍 UN Jobs"
+    elif "ifyoucouldjobs.com" in url:
+        return "🎨 If You Could"
+    elif "ziprecruiter.com" in url:
+        return "💼 ZipRecruiter"
+    else:
+        return "🌐 Other"
+
+# ✅ Send Email (Grouped by Platform → Company)
 def send_email():
-    """Send job listings via Gmail SMTP with formatted output."""
+    """Send job listings via Gmail SMTP with formatted output, grouped by platform and company."""
     
     # ✅ Fetch new jobs
     jobs = get_unsent_jobs()
@@ -67,21 +84,47 @@ def send_email():
         print("❌ No jobs in database. Skipping email.")
         return
 
+    # ✅ Group jobs by platform → then by company
+    jobs_by_platform = defaultdict(lambda: defaultdict(list))
+    
+    for job in jobs:
+        platform = get_source_platform(job["url"])
+        company_name = job.get("company", "Unknown Company")  # Default if missing
+        jobs_by_platform[platform][company_name].append(job)
+
     # ✅ Format Email Content
-    job_list = "\n".join([
-        f"🆕 {job['title']} at {job['company']} ({job['location']})\n   🔗 {job['url']}\n"
-        for job in jobs
-    ])
+    job_list = ""
+    
+    for platform, companies in sorted(jobs_by_platform.items()): 
+        job_list += f"\n# **{platform} Jobs**\n"
+        job_list += "=" * (len(platform) + 5) + "\n\n"
+
+        for company, company_jobs in sorted(companies.items()):
+            job_list += f"🟢 **{company}**\n"
+            job_list += "-" * (len(company) + 8) + "\n"
+
+            for job in company_jobs:
+                job_list += f"- **{job['title']}** ({job['location']})\n"
+                job_list += f"  📎 <a href='{job['url']}'>Click Here</a>\n\n"
 
     subject = f"🛠️ {len(jobs)} {'New ' if new_jobs else ''}Job Listings Found!"
-    body = f"Hello,\n\nHere are the {'latest' if new_jobs else 'full'} job listings:\n\n{job_list}\n\nBest,\nJob Scraper Bot"
+    body = f"""\
+    <html>
+    <body>
+    <p>Hello,</p>
+    <p>Here are the {'latest' if new_jobs else 'full'} job listings, grouped by platform and company:</p>
+    <pre style="font-family:Arial;">{job_list}</pre>
+    <p>Best,<br>Job Scraper Bot</p>
+    </body>
+    </html>
+    """
 
     # ✅ Set up email
     msg = MIMEMultipart()
     msg["From"] = os.getenv("EMAIL_ADDRESS")
     msg["To"] = os.getenv("RECIPIENT_EMAIL")
     msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(body, "html"))  # ✅ HTML email to support clickable links
 
     try:
         # ✅ Connect to SMTP server
