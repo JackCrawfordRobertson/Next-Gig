@@ -1,5 +1,3 @@
-Here’s a short README for your project:
-
 Job Scraper Bot
 
 🚀 Job Scraper Bot is an automated job listing scraper that fetches job postings from multiple sources, stores them in Google Firestore, and sends email alerts for new job postings.
