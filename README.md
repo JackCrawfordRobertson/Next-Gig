@@ -19,8 +19,7 @@ Installation & Setup
 
 1️⃣ Clone the Repository
 
-git clone https://github.com/JackCrawfordRobertson/job-scraper-bot.git
-cd job-scraper-bot
+git clone https://github.com/JackCrawfordRobertson/Next-Gig.git
 
 2️⃣ Set Up Virtual Environment
 
