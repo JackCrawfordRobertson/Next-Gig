@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -90,7 +91,9 @@ def fetch_workable_jobs():
                     "title": title,
                     "company": company,
                     "location": "London",
-                    "url": full_job_link  # ✅ Stores the full job URL
+                    "url": full_job_link,  # ✅ Stores the full job URL
+                    "date_added": datetime.utcnow().strftime("%Y-%m-%d"),  # ✅ New field
+                    "has_applied": False,  # ✅ New field
                 })
 
             except Exception as e:
@@ -100,3 +103,7 @@ def fetch_workable_jobs():
     driver.quit()
     print(f"✅ Finished scraping Workable. Total jobs found: {len(jobs)}")
     return jobs
+
+# ✅ Test Run
+if __name__ == "__main__":
+    fetch_workable_jobs()

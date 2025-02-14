@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -11,16 +12,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) 
 import config  # Import the config file
 
 BASE_URL = "https://www.ifyoucouldjobs.com/jobs"
-MAX_PAGES = 2  # Only scrape 2 pages
+MAX_PAGES = 2  # Scrape first 2 pages
 
 def fetch_ifyoucould_jobs():
-    """Scrapes job listings from If You Could Jobs using Selenium with strict keyword filtering"""
+    """Scrapes job listings from If You Could Jobs using Selenium with strict keyword filtering."""
     print("🔍 Starting If You Could Jobs Scraper...")
 
-    # Set up Chrome options
+    # ✅ Set up Chrome options
     options = Options()
-    # REMOVE HEADLESS MODE FOR DEBUGGING
-    options.add_argument("--headless")  # Run in background
+    options.add_argument("--headless")  # Run in background (Remove for debugging)
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
@@ -54,9 +54,8 @@ def fetch_ifyoucould_jobs():
             try:
                 # ✅ Check if title exists, otherwise skip
                 title_element = job.find_elements(By.CSS_SELECTOR, "h2.type-style-3")
-                if title_element:
-                    title = title_element[0].text.strip()
-                else:
+                title = title_element[0].text.strip() if title_element else None
+                if not title:
                     print("⚠️ Skipping job due to missing title")
                     continue
 
@@ -84,7 +83,9 @@ def fetch_ifyoucould_jobs():
                         "company": company,
                         "location": location,
                         "salary": salary,
-                        "url": full_link  # ✅ Stores the full job URL
+                        "url": full_link,
+                        "date_added": datetime.utcnow().strftime("%Y-%m-%d"),  # ✅ New field
+                        "has_applied": False,  # ✅ New field
                     })
                 else:
                     print(f"❌ Job Skipped: {title} (Does not match exact keywords)")
@@ -93,10 +94,10 @@ def fetch_ifyoucould_jobs():
                 print(f"⚠️ Skipping a job due to error: {e}")
                 continue  # Skip if any element is missing
 
-    # input("🔍 Press Enter to close the browser...")  # Keeps browser open for debugging
     driver.quit()
     print(f"✅ Finished scraping. Total jobs found: {len(jobs)}")
     return jobs
 
 # Run Scraper for Debugging
-fetch_ifyoucould_jobs()
+if __name__ == "__main__":
+    fetch_ifyoucould_jobs()

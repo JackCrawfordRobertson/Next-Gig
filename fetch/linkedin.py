@@ -16,7 +16,7 @@ HEADERS = {
 }
 
 # ✅ Define filtering rules
-EXCLUDED_KEYWORDS = ["video", "social media", "director", "senior"]  # 🚨 Now excludes senior roles
+EXCLUDED_KEYWORDS = ["video", "social media", "director", "senior"]  # 🚨 Excludes senior roles
 REQUIRED_LOCATIONS = ["London", "London Area"]  # 🚨 Only accept jobs in these locations
 
 # ✅ Convert relative date ("1 week ago", "3 weeks ago") to actual date
@@ -166,6 +166,8 @@ def fetch_linkedin_jobs(search_term, location, max_jobs=5, max_per_title=5):
                 "url": job_url,
                 "salary": salary,
                 "date_posted": job_date.strftime("%Y-%m-%d"),  # ✅ Store formatted date
+                "date_added": datetime.utcnow().strftime("%Y-%m-%d"),  # ✅ New field
+                "has_applied": False,  # ✅ New field
             })
 
             # ✅ Update count for this title

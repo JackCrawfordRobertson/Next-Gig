@@ -4,6 +4,7 @@ import time
 import random
 import cloudscraper
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 # ✅ Ensure script finds `config.py`
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -83,7 +84,9 @@ def fetch_unjobs():
                     "title": title,
                     "company": "UN Jobs",
                     "location": "London",
-                    "url": url
+                    "url": url,
+                    "date_added": datetime.utcnow().strftime("%Y-%m-%d"),  # ✅ New field
+                    "has_applied": False,  # ✅ New field
                 })
 
             # ✅ Find "Next >" button for pagination
@@ -119,4 +122,5 @@ def fetch_unjobs():
     return all_jobs
 
 # ✅ Test Run
-fetch_unjobs()
+if __name__ == "__main__":
+    fetch_unjobs()
