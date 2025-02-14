@@ -1,18 +1,19 @@
-Job Scraper Bot
+Next Gig
 
-🚀 Job Scraper Bot is an automated job listing scraper that fetches job postings from multiple sources, stores them in Google Firestore, and sends email alerts for new job postings.
+🚀 Next Gig is an automated job listing scraper that fetches job postings from multiple sources, stores them in Google Firestore, and sends email alerts for new job postings.
 
 Features
 
-✅ Scrapes job listings from:
+✅ Job listings from:
 	•	If You Could
 	•	UN Jobs
 	•	Workable
+	•	LinkedIn
 
 ✅ Stores jobs in Google Firestore
 ✅ Prevents duplicate job entries
 ✅ Sends email notifications for new jobs
-✅ Runs every 3 hours via GitHub Actions
+✅ Runs every 8 hours via GitHub Actions
 
 Installation & Setup
 
