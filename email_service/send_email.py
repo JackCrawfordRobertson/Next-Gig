@@ -114,7 +114,7 @@ def send_email():
     <p>Hello,</p>
     <p>Here are the {'latest' if new_jobs else 'full'} job listings, grouped by platform and company:</p>
     <pre style="font-family:Arial;">{job_list}</pre>
-    <p>Best,<br>Job Scraper Bot</p>
+    <p>Best,<br>Your Job Scraper Bot</p>
     </body>
     </html>
     """
