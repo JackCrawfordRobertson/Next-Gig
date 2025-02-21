@@ -3,6 +3,7 @@ requests
 beautifulsoup4
 selenium
 cloudscraper
+python-Levenshtein
 
 # Scheduler
 schedule
