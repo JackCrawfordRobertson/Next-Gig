@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from fetch.ifyoucould import fetch_ifyoucould_jobs
 from fetch.unjobs import fetch_unjobs
 from fetch.workable import fetch_workable_jobs
-from fetch_store.store_jobs import store_jobs
+from store.store_jobs import store_jobs
 
 def test_all_scrapers():
     all_jobs = []

@@ -1,4 +1,4 @@
-from fetch_store.store_jobs import store_jobs, fetch_stored_jobs
+from store.store_jobs import store_jobs, fetch_stored_jobs
 
 def test_firestore():
     print("💾 Storing a test job in Firestore...")

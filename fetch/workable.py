@@ -47,7 +47,7 @@ def fetch_workable_jobs():
             print("⚠️ No cookie popup found or already dismissed.")
 
         # ✅ Click "Show More Jobs" Up to 10 Times
-        max_clicks = 10
+        max_clicks = 3
         click_count = 0
 
         while click_count < max_clicks:

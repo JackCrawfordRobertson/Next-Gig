@@ -7,23 +7,36 @@ on:
 
 jobs:
   scrape-and-email:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use an Ubuntu VM for the action
 
     steps:
+      # Step 1: Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Step 2: Set Up Python
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
+      # Step 3: Install Dependencies
       - name: Install Dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt  # Install all your Python dependencies
 
+      # Step 4: Install Chrome and Chromedriver
+      - name: Install Chromium and Chromedriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          sudo apt-get install -y chromium-chromedriver
+          
+      # Step 5: Write Firebase Credentials to File
       - name: Write Firebase Credentials to File
         run: echo '${{ secrets.FIREBASE_CREDENTIALS_JSON }}' > /tmp/firebase_credentials.json
 
+      # Step 6: Set Up Environment Variables
       - name: Set Up Environment Variables
         run: |
           echo "FIREBASE_CREDENTIALS_PATH=/tmp/firebase_credentials.json" >> $GITHUB_ENV
@@ -34,8 +47,13 @@ jobs:
           echo "SMTP_SERVER=${{ secrets.SMTP_SERVER }}" >> $GITHUB_ENV
           echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> $GITHUB_ENV
 
+      # Step 7: Run Job Scraper (Headless Mode)
       - name: Run Job Scraper
-        run: python main.py
+        run: |
+          export DISPLAY=:99  # Set virtual display for headless Chrome
+          chromium-browser --headless --disable-gpu --remote-debugging-port=9222 &  # Start Chrome headless
+          python main.py  # Run your scraper script
 
+      # Step 8: Send Job Alert Emails
       - name: Send Job Alert Emails
-        run: python email_service/send_email.py
+        run: python email_service/send_email.py  # Run the email service after scraping
