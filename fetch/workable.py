@@ -20,7 +20,7 @@ def fetch_workable_jobs():
 
     # Set up Chrome options
     options = Options()
-    options.add_argument("--headless")  # Run in background
+    # options.add_argument("--headless")  # Run in background
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
