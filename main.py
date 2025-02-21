@@ -1,27 +1,27 @@
+# main.py
 import time
 from fetch import run_scrapers
-from store import store_jobs
+from store import store_jobs  # store_jobs now references store/store_jobs.py properly
 
 def job_cycle():
-    """Fetch new jobs, store them in Firestore, and send an email update."""
+    """Fetch new jobs, store them in Firestore, and optionally send email."""
     print("\n🔄 Fetching new jobs...")
-    jobs = run_scrapers()  # Run scrapers (don't trigger send_email here)
+    jobs = run_scrapers()  # This function returns a dictionary of lists
 
     if jobs:
-        print(f"💾 Storing {sum(len(j) for j in jobs.values())} jobs in Firestore...")
-        store_jobs.store_jobs(jobs)
+        total_jobs = sum(len(v) for v in jobs.values())
+        print(f"💾 Storing {total_jobs} jobs in Firestore...")
+        store_jobs.store_jobs(jobs)  # Must match the function name in store_jobs.py
     else:
         print("❌ No new jobs found. Skipping email.")
 
     print("✅ Job check complete.")
 
 if __name__ == "__main__":
-    # ✅ Record start time
     start_time = time.time()
 
     print("\n🚀 Running scraper test...")
-    job_cycle()  # Run the main scraping job cycle
+    job_cycle()
 
-    # ✅ Calculate elapsed time
     elapsed_time = time.time() - start_time
-    print(f"\n🕒 Total time taken: {elapsed_time:.2f} seconds.")  # Print elapsed time in seconds
+    print(f"\n🕒 Total time taken: {elapsed_time:.2f} seconds.")

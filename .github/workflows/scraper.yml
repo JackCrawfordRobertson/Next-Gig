@@ -2,8 +2,8 @@ name: Job Scraper Bot
 
 on:
   schedule:
-    - cron: "0 */8 * * *"  # Runs every 8 hours (scrape and send email)
-  workflow_dispatch:  # Allows manual triggering
+    - cron: "0 */8 * * *"  # Runs every 8 hours
+  workflow_dispatch:  # Allows manual triggers
 
 jobs:
   scrape-and-email:
@@ -19,7 +19,8 @@ jobs:
           python-version: "3.12"
 
       - name: Install Dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
 
       - name: Write Firebase Credentials to File
         run: echo '${{ secrets.FIREBASE_CREDENTIALS_JSON }}' > /tmp/firebase_credentials.json
@@ -34,8 +35,19 @@ jobs:
           echo "SMTP_SERVER=${{ secrets.SMTP_SERVER }}" >> $GITHUB_ENV
           echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> $GITHUB_ENV
 
+      # If site REALLY needs a displayed browser, uncomment lines below to install Xvfb:
+      # - name: Install Xvfb
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y xvfb
+
       - name: Run Job Scraper
-        run: python main.py
+        run: |
+          # If using Xvfb:
+          # sudo Xvfb :99 -ac -screen 0 1920x1080x24 &
+          # export DISPLAY=:99
+
+          python main.py  # This will run all scrapers & store in Firestore
 
       - name: Send Job Alert Emails
         run: python email_service/send_email.py
