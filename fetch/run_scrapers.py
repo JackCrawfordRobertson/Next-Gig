@@ -3,7 +3,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # ✅ Correctly import the functions from respective files
-from fetch.glassdoor import fetch_glassdoor_jobs
+# from fetch.glassdoor import fetch_glassdoor_jobs
 from fetch import ifyoucould, unjobs, workable, linkedin
 from store import store_jobs
 
@@ -19,9 +19,9 @@ def fetch_jobs():
         # "ziprecruiter": ziprecruiter.fetch_all_ziprecruiter_jobs(),  # Uncomment if needed
     }
 
-    # ✅ Fetch Glassdoor jobs
-    print("\n🔍 Fetching Glassdoor jobs...")
-    jobs["glassdoor"] = fetch_glassdoor_jobs()  # ✅ Calls the correct function
+    # # ✅ Fetch Glassdoor jobs
+    # print("\n🔍 Fetching Glassdoor jobs...")
+    # jobs["glassdoor"] = fetch_glassdoor_jobs()  # ✅ Calls the correct function
 
     return jobs  
 
