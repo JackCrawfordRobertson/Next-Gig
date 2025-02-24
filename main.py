@@ -1,17 +1,16 @@
-# main.py
 import time
-from fetch import run_scrapers
-from store import store_jobs  # store_jobs now references store/store_jobs.py properly
+from fetch.run_scrapers import run_scrapers  # ✅ Correct Import
+from store.store_jobs import store_jobs  # ✅ Corrected Import
 
 def job_cycle():
-    """Fetch new jobs, store them in Firestore, and optionally send email."""
+    """Fetch new jobs, store them in Firestore, and send email if new jobs exist."""
     print("\n🔄 Fetching new jobs...")
-    jobs = run_scrapers()  # This function returns a dictionary of lists
+    jobs = run_scrapers()  # ✅ Now fetches jobs only, does NOT store them
 
-    if jobs:
+    if any(jobs.values()):  # ✅ Ensure jobs exist before storing
         total_jobs = sum(len(v) for v in jobs.values())
         print(f"💾 Storing {total_jobs} jobs in Firestore...")
-        store_jobs.store_jobs(jobs)  # Must match the function name in store_jobs.py
+        store_jobs(jobs)  # ✅ Storing happens here only!
     else:
         print("❌ No new jobs found. Skipping email.")
 

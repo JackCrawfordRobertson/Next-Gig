@@ -47,7 +47,7 @@ def fetch_unjobs():
 
             if response.status_code == 403:
                 print("❌ Forbidden (403). Adding delay and retrying...")
-                time.sleep(random.randint(10, 20))  # 🔄 Add a longer delay
+                time.sleep(random.randint(5, 10))  # 🔄 Add a longer delay
                 response = scraper.get(current_page, headers=headers)
 
                 if response.status_code == 403:

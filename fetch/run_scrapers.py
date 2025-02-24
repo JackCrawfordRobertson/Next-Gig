@@ -2,37 +2,33 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# ✅ Correctly import the functions from respective files
-# from fetch.glassdoor import fetch_glassdoor_jobs
+# ✅ Import job keywords & location from config
+from config import JOB_KEYWORDS, LOCATION  
+
+# ✅ Import scrapers
 from fetch import ifyoucould, unjobs, workable, linkedin
-from store import store_jobs
+# from fetch.glassdoor import fetch_glassdoor_jobs  # ✅ Uncomment to enable Glassdoor
 
 def fetch_jobs():
-    """Fetch job listings from all sources and return as a dictionary."""
+    """Fetch job listings dynamically from all sources using job keywords and location."""
     print("\n⏳ Running job scrapers...")
 
     jobs = {
+        "linkedin": linkedin.fetch_all_linkedin_jobs(),
         "ifyoucould": ifyoucould.fetch_ifyoucould_jobs(),
         "unjobs": unjobs.fetch_unjobs(),
         "workable": workable.fetch_workable_jobs(),
-        "linkedin": linkedin.fetch_all_linkedin_jobs(),
-        # "ziprecruiter": ziprecruiter.fetch_all_ziprecruiter_jobs(),  # Uncomment if needed
     }
 
-    # # ✅ Fetch Glassdoor jobs
+    # ✅ Add Glassdoor back but keep it commented out
     # print("\n🔍 Fetching Glassdoor jobs...")
-    # jobs["glassdoor"] = fetch_glassdoor_jobs()  # ✅ Calls the correct function
+    # jobs["glassdoor"] = fetch_glassdoor_jobs(JOB_KEYWORDS, LOCATION)  # ✅ Calls the correct function
 
-    return jobs  
+    return jobs  # ✅ Now only returning jobs, not storing them
 
 def run_scrapers():
-    """Run all scrapers and store results in Firestore."""
-    jobs = fetch_jobs()
+    """Run all scrapers and return job data."""
+    return fetch_jobs()  # ✅ Now just returning jobs
 
-    # ✅ Send to Firestore via `store_jobs.py`
-    if any(jobs.values()):  # ✅ Checks if any list has jobs
-        total_jobs = sum(len(v) for v in jobs.values())
-        print(f"\n💾 Sending {total_jobs} jobs to Firestore...")
-        store_jobs.store_jobs(jobs)  # ✅ Calls `store_jobs.py`
-    else:
-        print("\n❌ No jobs found across all sources.")
+if __name__ == "__main__":
+    run_scrapers()
