@@ -1,178 +1,174 @@
-# fetch/glassdoor.py
-import time
-from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
-from Levenshtein import ratio
-import sys
 import os
-from urllib.parse import quote
+import json
+import re
+import requests
+import random
+import time
+from datetime import datetime, timedelta
 
-# ✅ Ensure Python finds config.py in the project root
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# ✅ Random User-Agents to Avoid Detection
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+]
 
-import config  # Contains JOB_KEYWORDS, etc.
+HEADERS = {
+    "authority": "www.glassdoor.com",
+    "accept": "*/*",
+    "accept-language": "en-US,en;q=0.9",
+    "apollographql-client-name": "job-search-next",
+    "apollographql-client-version": "4.65.5",
+    "content-type": "application/json",
+    "origin": "https://www.glassdoor.com",
+    "referer": "https://www.glassdoor.com/",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": random.choice(USER_AGENTS),  # ✅ Random user-agent
+}
 
-BASE_URL = (
-    "https://www.glassdoor.co.uk/Job/london-england-{query}-jobs-SRCH_IL."
-    "0,14_IC2671300_KO{start},{end}.htm?fromAge=7"
-)
+QUERY_TEMPLATE = """
+query JobSearchResultsQuery(
+    $keyword: String,
+    $locationId: Int,
+    $numJobsToShow: Int!,
+    $pageNumber: Int
+) {
+    jobListings(
+        contextHolder: {
+            searchParams: {
+                keyword: $keyword,
+                locationId: $locationId,
+                numPerPage: $numJobsToShow,
+                pageNumber: $pageNumber
+            }
+        }
+    ) {
+        jobview {
+            job {
+                jobTitleText
+                listingId
+            }
+            header {
+                employerNameFromSearch
+                locationName
+                ageInDays
+            }
+        }
+    }
+}
+"""
 
-def handle_cookie_banner(driver):
-    """Handles both 'Accept Cookies' and 'Reject Cookies' options."""
-    try:
-        print("🍪 Checking for cookie banner...")
-        WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.ID, "onetrust-accept-btn-handler"))
-        ).click()
-        print("✅ Accepted cookies.")
-    except Exception:
-        try:
-            WebDriverWait(driver, 2).until(
-                EC.element_to_be_clickable((By.ID, "onetrust-reject-all-handler"))
-            ).click()
-            print("✅ Rejected cookies.")
-        except Exception:
-            print("⚠️ No cookie banner found or already dismissed.")
+# ✅ Fallback CSRF Token (Used If Real Token Cannot Be Retrieved)
+FALLBACK_TOKEN = "Ft6oHEWlRZrxDww95Cpazw:0pGUrkb2y3TyOpAIqF2vbPmUXoXVkD3oEGDVkvfeCerceQ5-n8mBg3BovySUIjmCPHCaW0H2nQVdqzbtsYqf4Q:wcqRqeegRUa9MVLJGyujVXB7vWFPjdaS1CtrrzJq-ok"
 
-def close_popup(driver):
-    """Closes the sign-in popup if it appears."""
-    try:
-        print("🔓 Checking for sign-in popup...")
-        WebDriverWait(driver, 2).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.CloseButton"))
-        ).click()
-        print("✅ Sign-in popup dismissed!")
-    except Exception:
-        print("⚠️ No sign-in popup found or already dismissed.")
+def create_session():
+    """Create a session without a proxy"""
+    session = requests.Session()
+    session.headers.update(HEADERS)  # ✅ Apply headers globally
+    return session  # 🚀 Uses your local IP
 
-def load_more_jobs(driver, max_clicks=2):
-    """
-    Clicks 'Show more jobs' up to `max_clicks` times and closes 
-    any sign-in popups that reappear.
-    """
-    for _ in range(max_clicks):
-        try:
-            print("🔄 Clicking 'Show more jobs' button...")
-            load_more_button = WebDriverWait(driver, 2).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "button[data-test='load-more']"))
-            )
-            driver.execute_script("arguments[0].click();", load_more_button)
-            time.sleep(2)
-
-            # 🟢 Handle reappearing popups
-            close_popup(driver)
-        except Exception:
-            print("⚠️ 'Show more jobs' button not found or no more jobs to load.")
-            break
-
-def fetch_glassdoor_jobs():
-    """Scrapes job listings from Glassdoor using Selenium (headless) and fuzzy matching."""
-    print("\n🔍 Starting Glassdoor Jobs Scraper...")
-
-    # ✅ Chrome options (headless by default)
-    options = Options()
-    # If you want to try the new headless mode, replace with:
-    # options.add_argument("--headless=new")
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--blink-settings=imagesEnabled=false")
-    options.add_argument("--disable-blink-features=CSSPaintAPI")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options
-    )
-
-    jobs = []
-
-    for keyword in config.JOB_KEYWORDS:
-        # Convert spaces to hyphens for the URL
-        query = quote(keyword.replace(" ", "-"))
-        start = 15  # Glassdoor starts job title at position 15
-        end = start + len(keyword)
-        query_url = BASE_URL.format(query=query, start=start, end=end)
-
-        print(f"\n🌍 Navigating to {query_url} (Keyword: {keyword})")
-        driver.get(query_url)
-
-        # ✅ Handle cookie banner (Accept/Reject)
-        handle_cookie_banner(driver)
-
-        # ✅ Manually enter the keyword in the search box
-        try:
-            search_box = WebDriverWait(driver, 3).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='text']"))
-            )
-            search_box.clear()
-            search_box.send_keys(keyword)
-            search_box.send_keys(Keys.RETURN)
-            time.sleep(1.5)
-        except Exception:
-            print("⚠️ Could not find the search box to trigger search manually.")
-
-        # ✅ Close sign-in popup if present
-        close_popup(driver)
-
-        # ✅ Optionally click 'Show more jobs' to load additional results
-        load_more_jobs(driver, max_clicks=2)
-
-        # ✅ Wait for job cards to appear
-        try:
-            job_cards = WebDriverWait(driver, 3).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.jobCard.JobCard_jobCardContent__JQ5Rq"))
-            )
-        except Exception:
-            print("❌ No job listings found for this keyword. Moving on.")
-            continue
-
-        print(f"📌 Found {len(job_cards)} jobs for '{keyword}'.")
-
-        # ✅ Limit to first 10 job cards per keyword for speed
-        for job_card in job_cards[:10]:
+def get_csrf_token(session, retries=3):
+    """Attempts to fetch CSRF token from multiple pages."""
+    urls = [
+        "https://www.glassdoor.com/Job/computer-science-jobs.htm",
+        "https://www.glassdoor.com/Job/data-journalist-jobs.htm",
+        "https://www.glassdoor.com/",
+    ]
+    
+    for attempt in range(retries):
+        for url in urls:
             try:
-                title_element = job_card.find_element(By.CSS_SELECTOR, "a.JobCard_jobTitle__GLyJ1")
-                title = title_element.text.strip()
-                job_url = title_element.get_attribute("href")
-
-                similarity = ratio(keyword.lower(), title.lower())
-                if similarity < 0.8:
-                    print(f"❌ Skipping '{title}' (Similarity: {similarity:.2f}) vs. '{keyword}'")
-                    continue
-
-                company_element = job_card.find_element(By.CSS_SELECTOR, "span.EmployerProfile_compactEmployerName__9MGcV")
-                company = company_element.text.strip()
-
-                location_element = job_card.find_element(By.CSS_SELECTOR, "div.JobCard_location__Ds1fM")
-                location = location_element.text.strip()
-
-                jobs.append({
-                    "title": title,
-                    "company": company,
-                    "location": location,
-                    "url": job_url,
-                    "date_added": datetime.utcnow().strftime("%Y-%m-%d"),
-                    "has_applied": False
-                })
-
-                print(f"✅ '{title}' at '{company}' ({location}) - Similarity: {similarity:.2f}")
-                print(f"   🔗 {job_url}")
+                time.sleep(random.uniform(3, 7))  # ✅ Random delay to avoid detection
+                res = session.get(url, headers=HEADERS)
+                print(f"🔍 CSRF Response Code from {url}: {res.status_code}")
+                
+                if res.status_code == 200:
+                    match = re.search(r'"token":\s*"([^"]+)"', res.text)
+                    if match:
+                        token = match.group(1)
+                        print(f"✅ CSRF Token Retrieved: {token[:10]}...")
+                        return token
+                else:
+                    print(f"⚠️ Retrying CSRF Token Request ({attempt+1}/{retries})...")
 
             except Exception as e:
-                print(f"⚠️ Error processing job card: {e}")
+                print(f"❌ Failed to fetch CSRF token from {url} (Error: {e})")
 
-    driver.quit()
-    print(f"✅ Finished Glassdoor scraping. Total jobs found: {len(jobs)}")
+    print("❌ No CSRF Token Found! Using fallback token.")
+    return FALLBACK_TOKEN
+
+# ✅ Step 3: Fetch a Single Job from Glassdoor
+def fetch_one_job(query, session, location_id="11047"):
+    """Query Glassdoor API for a single job listing."""
+    api_url = "https://www.glassdoor.com/graph"
+    csrf_token = get_csrf_token(session)
+
+    if not csrf_token:
+        print(f"❌ CSRF token missing, skipping {query}")
+        return []
+
+    HEADERS["gd-csrf-token"] = csrf_token  # ✅ Apply CSRF token
+
+    payload = json.dumps([{
+        "operationName": "JobSearchResultsQuery",
+        "variables": {
+            "keyword": query,
+            "locationId": location_id,
+            "numJobsToShow": 1,  # ✅ Request only 1 job for debugging
+            "pageNumber": 1
+        },
+        "query": QUERY_TEMPLATE
+    }])
+
+    try:
+        time.sleep(random.uniform(3, 7))  # ✅ Add delay before API call
+        response = session.post(api_url, headers=HEADERS, data=payload)
+        print(f"🔍 API Response Code: {response.status_code}")
+
+        response.raise_for_status()  # ✅ Ensure successful API call
+    except requests.RequestException as e:
+        print(f"❌ API request failed for {query} (Error: {e})")
+        return []
+
+    try:
+        data = response.json()[0]
+        jobs_data = data.get("data", {}).get("jobListings", {}).get("jobview", [])
+    except (json.JSONDecodeError, IndexError) as e:
+        print(f"❌ JSON parsing failed for {query} (Error: {e})")
+        return []
+
+    # ✅ Process Job Listing
+    jobs = []
+    for job in jobs_data:
+        job_id = job["job"]["listingId"]
+        title = job["job"]["jobTitleText"]
+        company = job["header"]["employerNameFromSearch"]
+        location = job["header"]["locationName"]
+        age_in_days = job["header"].get("ageInDays", 0)
+        date_posted = (datetime.utcnow() - timedelta(days=age_in_days)).strftime("%Y-%m-%d")
+
+        jobs.append({
+            "id": job_id,
+            "title": title,
+            "company": company,
+            "location": location,
+            "date_posted": date_posted,
+            "url": f"https://www.glassdoor.com/job-listing/j?jl={job_id}",
+            "has_applied": False
+        })
+
     return jobs
 
+# ✅ Step 4: Run the Test for One Job
 if __name__ == "__main__":
-    # Local test
-    fetch_glassdoor_jobs()
+    print("🔍 Starting Glassdoor Jobs Scraper...")
+    session = create_session()
+
+    test_job = "Data Journalist"  # ✅ Test with only one job
+    print(f"\n🌍 Searching for '{test_job}' job in London...")
+    jobs = fetch_one_job(test_job, session)
+
+    print(f"📌 Total jobs found: {len(jobs)}")
+    print(jobs)  # ✅ Print for debugging
